@@ -7,6 +7,7 @@ import '../screens/admin/admin_dashboard.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/contact/request_service_screen.dart';
 import '../screens/song/song_detail_screen.dart';
+import '../screens/user_dashboard.dart'; // Import the new UserDashboard screen
 // Add other imports as screens are created
 
 class AppRoutes {
@@ -18,6 +19,8 @@ class AppRoutes {
   static const String login = '/login';
   static const String requestService = '/request-service';
   static const String songDetail = '/song-detail';
+  static const String userDashboard =
+      '/user-dashboard'; // Add route for UserDashboard
   // Add other route names here
 
   static Map<String, WidgetBuilder> get routes => {
@@ -29,6 +32,8 @@ class AppRoutes {
         login: (context) => const LoginScreen(),
         requestService: (context) => const RequestServiceScreen(),
         songDetail: (context) => const SongDetailScreen(),
+        userDashboard: (context) =>
+            const UserDashboard(), // Add UserDashboard to routes
         // Add other routes here
       };
 }

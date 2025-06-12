@@ -20,7 +20,11 @@ class LoginScreen extends StatelessWidget {
                 Provider.of<AuthProvider>(context, listen: false);
             try {
               await authProvider.signInWithGoogle();
-              Navigator.pop(context); // Go back after successful login
+              if (authProvider.isAdmin) {
+                Navigator.pushReplacementNamed(context, '/admin-dashboard');
+              } else {
+                Navigator.pushReplacementNamed(context, '/user-dashboard');
+              }
             } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
