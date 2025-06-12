@@ -199,6 +199,32 @@ class _UploadSongFormState extends State<_UploadSongForm> {
     final fileSize = _fileSize ?? 0;
     final description = _descriptionController.text.trim();
     final lyrics = _lyricsController.text.trim();
+    // Prepare versions: first file is original, rest are covers with their file names as title
+    final List<Map<String, dynamic>> versions = [];
+    // Original
+    versions.add({
+      'type': 'raw',
+      'fileUrl': _uploadedUrls[0],
+      'genre': genre,
+      'title': title,
+      'votes': 0,
+      'likes': 0,
+    });
+    // Covers
+    for (int i = 1; i < _uploadedUrls.length; i++) {
+      if (_uploadedUrls[i] != null &&
+          _selectedFiles != null &&
+          i < _selectedFiles!.length) {
+        versions.add({
+          'type': 'ai_cover',
+          'fileUrl': _uploadedUrls[i],
+          'genre': genre,
+          'title': _selectedFiles![i].name,
+          'votes': 0,
+          'likes': 0,
+        });
+      }
+    }
     await FirebaseFirestore.instance.collection('songs').add({
       'title': title,
       'genres': [genre],
@@ -207,24 +233,7 @@ class _UploadSongFormState extends State<_UploadSongForm> {
       'description': description,
       'lyrics': lyrics,
       'timestamp': FieldValue.serverTimestamp(),
-      'versions': [
-        {
-          'type': 'raw',
-          'fileUrl': _uploadedUrls[0],
-          'genre': genre,
-          'votes': 0,
-          'likes': 0,
-        },
-        for (int i = 1; i < _uploadedUrls.length; i++)
-          if (_uploadedUrls[i] != null)
-            {
-              'type': 'ai_cover',
-              'fileUrl': _uploadedUrls[i],
-              'genre': genre,
-              'votes': 0,
-              'likes': 0,
-            },
-      ],
+      'versions': versions,
       'aiCovers': _uploadedUrls.sublist(1),
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -299,20 +308,97 @@ class _UploadSongFormState extends State<_UploadSongForm> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Original song file button
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.upload_file, size: 28),
-                    label: Text(_selectedFiles == null
-                        ? 'Select up to 6 files (original + covers)'
-                        : 'Selected: ${_selectedFiles!.length} file(s)'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 18),
-                      textStyle: const TextStyle(fontSize: 18),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.upload_file, size: 28),
+                      label: Text(
+                          _selectedFiles == null || _selectedFiles!.isEmpty
+                              ? 'Select original song file'
+                              : 'Original: \\${_selectedFiles![0].name}'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 18),
+                        textStyle: const TextStyle(fontSize: 18),
+                      ),
+                      onPressed: _isUploading
+                          ? null
+                          : () async {
+                              final uploadInput = html.FileUploadInputElement();
+                              uploadInput.accept = '.mp3,audio/*';
+                              uploadInput.multiple = false;
+                              uploadInput.click();
+                              await uploadInput.onChange.first;
+                              final files = uploadInput.files;
+                              if (files == null || files.isEmpty) return;
+                              setState(() {
+                                if (_selectedFiles == null) {
+                                  _selectedFiles =
+                                      List<html.File>.filled(1, files.first);
+                                } else if (_selectedFiles!.isEmpty) {
+                                  _selectedFiles = [files.first];
+                                } else {
+                                  // Replace the original file, keep covers if any
+                                  if (_selectedFiles!.length == 1) {
+                                    _selectedFiles![0] = files.first;
+                                  } else {
+                                    _selectedFiles![0] = files.first;
+                                  }
+                                }
+                                _uploadedUrls[0] = null;
+                              });
+                            },
                     ),
-                    onPressed: _isUploading ? null : _pickFiles,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Cover(s) file button
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.library_music, size: 24),
+                      label: Text(_selectedFiles == null ||
+                              _selectedFiles!.length <= 1
+                          ? 'Select cover(s) (up to 5)'
+                          : 'Covers: \\${_selectedFiles!.length - 1} selected'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 18),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                      onPressed: _isUploading
+                          ? null
+                          : () async {
+                              final uploadInput = html.FileUploadInputElement();
+                              uploadInput.accept = '.mp3,audio/*';
+                              uploadInput.multiple = true;
+                              uploadInput.click();
+                              await uploadInput.onChange.first;
+                              final files = uploadInput.files;
+                              if (files == null || files.isEmpty) return;
+                              setState(() {
+                                if (_selectedFiles == null ||
+                                    _selectedFiles!.isEmpty) {
+                                  // No original selected yet, add a placeholder for original
+                                  _selectedFiles =
+                                      List<html.File>.filled(1, files.first);
+                                  _selectedFiles!.addAll(files.take(5));
+                                } else {
+                                  // Keep the original, replace covers
+                                  _selectedFiles = [_selectedFiles![0]];
+                                  _selectedFiles!.addAll(files.take(5));
+                                }
+                                // Reset uploadedUrls for covers
+                                for (int i = 1; i < 6; i++) {
+                                  _uploadedUrls[i] = null;
+                                }
+                              });
+                            },
+                    ),
                   ),
                 ],
               ),
@@ -357,7 +443,7 @@ class _UploadSongFormState extends State<_UploadSongForm> {
             ],
           ),
         ),
-      ),
-    );
+      ), // Close Padding
+    ); // Close Card
   }
 }

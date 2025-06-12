@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/song_provider.dart';
-import '../widgets/bottom_nav_bar.dart';
 
 class UserDashboard extends StatelessWidget {
   const UserDashboard({Key? key}) : super(key: key);
@@ -97,22 +96,6 @@ class UserDashboard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: 1, // Library tab index
-        onTap: (index) {
-          // Handle navigation to Home, Library, Downloads, etc.
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/');
-          } else if (index == 1) {
-            // Already on Library/UserDashboard
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/downloads');
-          } else if (index == 3) {
-            Navigator.pushReplacementNamed(context, '/login');
-          }
-        },
-        isAdmin: false,
       ),
     );
   }

@@ -10,6 +10,7 @@ class SongCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onVote;
   final VoidCallback onComment;
+  final VoidCallback onCovers;
 
   const SongCard({
     super.key,
@@ -21,6 +22,7 @@ class SongCard extends StatelessWidget {
     required this.onLike,
     required this.onVote,
     required this.onComment,
+    required this.onCovers,
   });
 
   @override
@@ -81,6 +83,17 @@ class SongCard extends StatelessWidget {
                       IconButton(
                           icon: const Icon(Icons.comment),
                           onPressed: onComment),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: onCovers,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.pink,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                        ),
+                        child: const Text('Covers'),
+                      ),
                     ],
                   ),
                 ],
