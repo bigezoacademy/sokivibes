@@ -20,13 +20,19 @@ class BottomNavBar extends StatelessWidget {
         label: 'Home',
       ),
       const BottomNavigationBarItem(
-        icon: Icon(Icons.search),
-        label: 'Discover',
-      ),
-      const BottomNavigationBarItem(
         icon: Icon(Icons.library_music),
         label: 'Library',
       ),
+      if (isAdmin)
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.upload_file),
+          label: 'Upload',
+        )
+      else
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.download),
+          label: 'Downloads',
+        ),
       if (isAdmin)
         const BottomNavigationBarItem(
           icon: Icon(Icons.admin_panel_settings),
