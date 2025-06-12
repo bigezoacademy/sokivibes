@@ -29,7 +29,7 @@ class AuthService {
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
+      if (googleUser == null) return null; // User cancelled
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -37,7 +37,9 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
       return await _auth.signInWithCredential(credential);
-    } catch (e) {
+    } catch (e, stack) {
+      print('AuthService.signInWithGoogle error: \\${e.toString()}');
+      print('Stack trace: \\${stack.toString()}');
       rethrow;
     }
   }

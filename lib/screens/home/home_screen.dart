@@ -11,6 +11,7 @@ import '../downloads/download_screen.dart';
 import '../search/search_screen.dart';
 import '../auth/login_screen.dart';
 import '../admin/admin_dashboard.dart';
+import '../../models/song_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -34,7 +35,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final isAdmin = authProvider.isAdmin;
     final songProvider = Provider.of<SongProvider>(context);
     if (songProvider.songs.isEmpty) {
-      songProvider.fetchSongs();
+      // Add dummy songs for development/demo if no songs are loaded
+      songProvider.songs.addAll([
+        Song(
+          id: 'dummy1',
+          title: 'Demo Song 1',
+          description: 'A cool demo track',
+          genres: ['Afrobeat', 'Pop'],
+          originalUrl: '',
+          versions: [],
+          timestamp: DateTime.now(),
+        ),
+        Song(
+          id: 'dummy2',
+          title: 'Demo Song 2',
+          description: 'Another demo track',
+          genres: ['Jazz'],
+          originalUrl: '',
+          versions: [],
+          timestamp: DateTime.now(),
+        ),
+      ]);
     }
     final songs = songProvider.songs;
     final List<Widget> _pages = [
