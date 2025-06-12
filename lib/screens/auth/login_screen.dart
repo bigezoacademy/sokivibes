@@ -34,8 +34,8 @@ class LoginScreen extends StatelessWidget {
                 print('Redirecting to /admin-dashboard');
                 Navigator.pushReplacementNamed(context, '/admin-dashboard');
               } else {
-                print('Redirecting to /dashboard');
-                Navigator.pushReplacementNamed(context, '/dashboard');
+                print('Redirecting to /user-dashboard');
+                Navigator.pushReplacementNamed(context, '/user-dashboard');
               }
             } catch (e, stack) {
               print('Google sign-in failed: \\${e.toString()}');
