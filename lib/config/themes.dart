@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppThemes {
   static final lightTheme = ThemeData(
     brightness: Brightness.light,
-    primarySwatch: Colors.deepPurple,
+    primarySwatch: Colors.pink,
     textTheme: GoogleFonts.poppinsTextTheme(),
     cardTheme: CardTheme(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -18,14 +18,14 @@ class AppThemes {
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Colors.white,
-      selectedItemColor: Colors.deepPurple,
+      selectedItemColor: Colors.pink,
       unselectedItemColor: Colors.grey,
     ),
   );
 
   static final darkTheme = ThemeData(
     brightness: Brightness.dark,
-    primarySwatch: Colors.deepPurple,
+    primarySwatch: Colors.pink,
     textTheme: GoogleFonts.poppinsTextTheme(
         ThemeData(brightness: Brightness.dark).textTheme),
     cardTheme: CardTheme(
@@ -40,7 +40,7 @@ class AppThemes {
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Color(0xFF23232B),
-      selectedItemColor: Colors.deepPurpleAccent,
+      selectedItemColor: Colors.pink,
       unselectedItemColor: Colors.grey,
     ),
   );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/auth_service.dart';
 import '../config/constants.dart';
@@ -35,22 +34,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signInWithGoogle() async {
-    final userCredential = await _authService.signInWithGoogle();
-    if (userCredential == null || userCredential.user == null) {
-      // User cancelled sign-in, do not throw error, just return
+    final user = await _authService.signInWithGoogle();
+    if (user == null) {
+      // User cancelled sign-in or not found in Firestore, do not throw error, just return
       return;
     }
-    final user = userCredential.user!;
-    final email = user.email ?? '';
-    final role = AppConstants.adminEmails.contains(email) ? 'admin' : 'user';
-    final firestore = FirebaseFirestore.instance;
-    await firestore.collection('users').doc(user.uid).set({
-      'email': email,
-      'role': role,
-      'displayName': user.displayName ?? '',
-      'photoURL': user.photoURL ?? '',
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    // No need to create/update Firestore user here, already handled in AuthService
     notifyListeners();
   }
 

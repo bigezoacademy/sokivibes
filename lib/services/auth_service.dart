@@ -1,9 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../config/constants.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId:
+        '841345536423-39j6k0b7b5pk51inrpasmc971p6pj1a5.apps.googleusercontent.com',
+  );
 
   Stream<User?> get userChanges => _auth.userChanges();
 
@@ -26,19 +31,77 @@ class AuthService {
     return await _auth.signInAnonymously();
   }
 
-  Future<UserCredential?> signInWithGoogle() async {
+  Future<User?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // User cancelled
+      print('Starting Google sign-in...');
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        print('Google sign-in cancelled by user.');
+        return null;
+      }
+      print('Google user: \\${googleUser.email}, id: \\${googleUser.id}');
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+      print(
+          'Google auth: accessToken=\\${googleAuth.accessToken}, idToken=\\${googleAuth.idToken}');
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      return await _auth.signInWithCredential(credential);
+      print('Signing in with Firebase credential...');
+      UserCredential result = await _auth.signInWithCredential(credential);
+      User? user = result.user;
+      print('Firebase user: \\${user?.uid}, email: \\${user?.email}');
+      if (user == null) {
+        print('No Firebase user after sign-in.');
+        return null;
+      }
+      if (user.email == null) {
+        print('Firebase user email is null! Cannot continue.');
+        await _auth.signOut();
+        return null;
+      }
+      final firestore = FirebaseFirestore.instance;
+      print('Checking Firestore for user with email: \\${user.email}');
+      final query = await firestore
+          .collection('users')
+          .where('email', isEqualTo: user.email)
+          .limit(1)
+          .get();
+      print('Firestore query docs: \\${query.docs.length}');
+      if (query.docs.isNotEmpty) {
+        final doc = query.docs.first;
+        final data = doc.data();
+        print('Firestore user doc data: \\${data.toString()}');
+        final userRef = firestore.collection('users').doc(user.uid);
+        final mergedData = {
+          ...data,
+          'displayName': user.displayName,
+          'photoURL': user.photoURL,
+          'email': user.email,
+          'role': (data['role'] ??
+              (AppConstants.adminEmails.contains(user.email)
+                  ? 'admin'
+                  : 'user')),
+          'createdAt': (data['createdAt'] ?? FieldValue.serverTimestamp()),
+        };
+        print('Merged user data to set: \\${mergedData.toString()}');
+        await userRef.set(mergedData, SetOptions(merge: true));
+        for (final d in query.docs) {
+          if (d.id != user.uid) {
+            print('Deleting duplicate Firestore user doc: \\${d.id}');
+            await firestore.collection('users').doc(d.id).delete();
+          }
+        }
+        print('Returning user after Firestore update.');
+        return user;
+      } else {
+        print('No Firestore user found for this email. Signing out.');
+        await _auth.signOut();
+        return null;
+      }
     } catch (e, stack) {
-      print('AuthService.signInWithGoogle error: \\${e.toString()}');
+      print('signInWithGoogle error: \\${e.toString()}');
       print('Stack trace: \\${stack.toString()}');
       rethrow;
     }
