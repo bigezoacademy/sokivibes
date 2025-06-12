@@ -7,7 +7,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId:
-        '841345536423-39j6k0b7b5pk51inrpasmc971p6pj1a5.apps.googleusercontent.com',
+        '1000550306677-o616hchvjkq2ft0vj4tvu3pn11rt3kcd.apps.googleusercontent.com',
   );
 
   Stream<User?> get userChanges => _auth.userChanges();
@@ -96,9 +96,20 @@ class AuthService {
         print('Returning user after Firestore update.');
         return user;
       } else {
-        print('No Firestore user found for this email. Signing out.');
-        await _auth.signOut();
-        return null;
+        print('No Firestore user found for this email. Creating new user doc.');
+        final userRef = firestore.collection('users').doc(user.uid);
+        final newUserData = {
+          'displayName': user.displayName,
+          'photoURL': user.photoURL,
+          'email': user.email,
+          'role': (AppConstants.adminEmails.contains(user.email)
+              ? 'admin'
+              : 'user'),
+          'createdAt': FieldValue.serverTimestamp(),
+        };
+        await userRef.set(newUserData);
+        print('New Firestore user doc created. Returning user.');
+        return user;
       }
     } catch (e, stack) {
       print('signInWithGoogle error: \\${e.toString()}');
