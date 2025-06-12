@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1000550306677",
+    "project_id": "sokivibes",
+    "storage_bucket": "sokivibes.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000550306677:android:9e989b2407b1207f68b93c",
+        "android_client_info": {
+          "package_name": "com.example.sokivibes_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKDg7sxsHV-xUT0qQOJTL0sd6P59Xn7Ic"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
