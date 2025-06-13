@@ -26,11 +26,11 @@ class ProfileScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircleAvatar(
-              radius: 90,
+              radius: 56, // smaller avatar
               backgroundImage:
                   user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
               child: user?.photoURL == null
-                  ? const Icon(Icons.person, size: 120)
+                  ? const Icon(Icons.person, size: 56)
                   : null,
             ),
             const SizedBox(height: 24),
@@ -52,30 +52,11 @@ class ProfileScreen extends StatelessWidget {
                   Text(user?.email ?? ''),
                 ]),
                 TableRow(children: [
-                  const Text('Role:',
+                  const Text('Account type:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   Text(authProvider.isAdmin ? 'admin' : 'user'),
                 ]),
-                TableRow(children: [
-                  const Text('Created:',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(createdAt.isNotEmpty ? createdAt : '-'),
-                ]),
-                TableRow(children: [
-                  const Text('Photo URL:',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(user?.photoURL ?? '-'),
-                ]),
               ],
-            ),
-            const SizedBox(height: 16),
-            Text('Total Likes: 0'),
-            Text('Total Votes: 0'),
-            Text('Total Comments: 0'),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Center(
-                  child: Text('Liked and commented songs will appear here.')),
             ),
           ],
         ),
