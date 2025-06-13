@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html;
 import '../../providers/song_provider.dart';
 import '../../widgets/song_card.dart';
 import '../../widgets/bottom_nav_bar.dart';
@@ -225,117 +227,159 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
           ),
           body: songs.isEmpty
               ? const Center(child: Text('No songs found.'))
-              : Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: ListView.builder(
-                    itemCount: songs.length,
-                    itemBuilder: (context, index) {
-                      final song = songs[index];
-                      return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SongCard(
-                              title: song.title,
-                              genres: song.genres,
-                              coverUrl: song.originalUrl.isNotEmpty
-                                  ? song.originalUrl
-                                  : 'https://placehold.co/64x64',
-                              onPlay: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  builder: (_) => SongPlayerBottomSheet(
-                                    url: song.originalUrl,
+              : Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(
+                          top: 8, left: 16, right: 16, bottom: 8),
+                      child: Text(
+                        'Listen or Download AI-generated covers of your favorite original songs. Enjoy both the raw tracks and creative AI versions, all in one place!',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: ListView.builder(
+                          itemCount: songs.length,
+                          itemBuilder: (context, index) {
+                            final song = songs[index];
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SongCard(
                                     title: song.title,
-                                  ),
-                                );
-                              },
-                              onDownload: () async {
-                                try {
-                                  final hasPermission =
-                                      await PermissionService()
-                                          .requestStoragePermission();
-                                  if (hasPermission) {
-                                    await StorageService().downloadSong(
-                                        song.originalUrl, song.title);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Downloaded \\${song.title}')),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text(
-                                              'Storage permission denied.')),
-                                    );
-                                  }
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            'Download failed: \\${e.toString()}')),
-                                  );
-                                }
-                              },
-                              onLike: () async {
-                                final auth = Provider.of<AuthProvider>(context,
-                                    listen: false);
-                                if (!auth.isLoggedIn) {
-                                  Navigator.pushNamed(context, '/login');
-                                } else {
-                                  await songProvider.likeSong(
-                                      song.id, auth.user!.uid);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Liked!')),
-                                  );
-                                }
-                              },
-                              onComment: () {
-                                Navigator.pushNamed(context, '/song-detail',
-                                    arguments: song);
-                              },
-                            ),
-                            if (song.versions.length > 1)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 0, vertical: 0),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.pink,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              SongCoversPage(song: song),
+                                    genres: song.genres,
+                                    coverUrl: song.originalUrl.isNotEmpty
+                                        ? song.originalUrl
+                                        : 'https://placehold.co/64x64',
+                                    onPlay: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (_) => SongPlayerBottomSheet(
+                                          url: song.originalUrl,
+                                          title: song.title,
                                         ),
                                       );
                                     },
-                                    child: const Text(
-                                      'View Covers',
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
+                                    onDownload: () async {
+                                      if (kIsWeb) {
+                                        // Web download logic
+                                        final url = song.originalUrl;
+                                        final anchor = html.AnchorElement(
+                                            href: url)
+                                          ..setAttribute(
+                                              'download', song.title + '.mp3')
+                                          ..target = 'blank';
+                                        html.document.body!.append(anchor);
+                                        anchor.click();
+                                        anchor.remove();
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Download started in browser.')),
+                                        );
+                                      } else {
+                                        try {
+                                          final hasPermission =
+                                              await PermissionService()
+                                                  .requestStoragePermission();
+                                          if (hasPermission) {
+                                            await StorageService().downloadSong(
+                                                song.originalUrl, song.title);
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Downloaded \\${song.title}')),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                  content: Text(
+                                                      'Storage permission denied.')),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    'Download failed: \\${e.toString()}')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    onLike: () async {
+                                      final auth = Provider.of<AuthProvider>(
+                                          context,
+                                          listen: false);
+                                      if (!auth.isLoggedIn) {
+                                        Navigator.pushNamed(context, '/login');
+                                      } else {
+                                        await songProvider.likeSong(
+                                            song.id, auth.user!.uid);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text('Liked!')),
+                                        );
+                                      }
+                                    },
+                                    onComment: () {
+                                      Navigator.pushNamed(
+                                          context, '/song-detail',
+                                          arguments: song);
+                                    },
                                   ),
-                                ),
+                                  if (song.versions.length > 1)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 0, vertical: 0),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.pink,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 16),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    SongCoversPage(song: song),
+                                              ),
+                                            );
+                                          },
+                                          child: const Text(
+                                            'View Covers',
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
         );
       },

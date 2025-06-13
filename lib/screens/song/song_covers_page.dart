@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html; // For web download
 import '../../models/song_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/song_provider.dart';
@@ -224,35 +226,57 @@ class SongCoversPage extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(Icons.download),
                                   onPressed: () async {
-                                    try {
-                                      final hasPermission =
-                                          await PermissionService()
-                                              .requestStoragePermission();
-                                      if (hasPermission) {
-                                        await StorageService().downloadSong(
-                                            cover.fileUrl,
-                                            song.title + '_' + cover.genre);
+                                    if (kIsWeb) {
+                                      final url = cover.fileUrl;
+                                      final anchor =
+                                          html.AnchorElement(href: url)
+                                            ..setAttribute(
+                                                'download',
+                                                song.title +
+                                                    '_' +
+                                                    cover.genre +
+                                                    '.mp3')
+                                            ..target = 'blank';
+                                      html.document.body!.append(anchor);
+                                      anchor.click();
+                                      anchor.remove();
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Download started in browser.')),
+                                      );
+                                    } else {
+                                      try {
+                                        final hasPermission =
+                                            await PermissionService()
+                                                .requestStoragePermission();
+                                        if (hasPermission) {
+                                          await StorageService().downloadSong(
+                                              cover.fileUrl,
+                                              song.title + '_' + cover.genre);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    'Downloaded ${song.title} (${cover.genre})')),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Storage permission denied.')),
+                                          );
+                                        }
+                                      } catch (e) {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
                                               content: Text(
-                                                  'Downloaded ${song.title} (${cover.genre})')),
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Storage permission denied.')),
+                                                  'Download failed: ${e.toString()}')),
                                         );
                                       }
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text(
-                                                'Download failed: ${e.toString()}')),
-                                      );
                                     }
                                   },
                                 ),
@@ -284,15 +308,44 @@ class SongCoversPage extends StatelessWidget {
                                   },
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.copy),
-                                  tooltip: 'Copy song link',
-                                  onPressed: () async {
-                                    final url = cover.fileUrl;
-                                    await Clipboard.setData(
-                                        ClipboardData(text: url));
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text('Song link copied!')),
+                                  icon: const Icon(Icons.share),
+                                  tooltip: 'Share',
+                                  onPressed: () {
+                                    final shareText =
+                                        'Check out this song ${song.title} on Soki-Vibes: https://sokivibes.web.app/';
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (context) => SizedBox(
+                                        height: 160,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Text('Share this song',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            const SizedBox(height: 12),
+                                            SelectableText(shareText),
+                                            const SizedBox(height: 12),
+                                            ElevatedButton.icon(
+                                              icon: const Icon(Icons.copy),
+                                              label: const Text('Copy Link'),
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text: shareText));
+                                                Navigator.pop(context);
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                      content: Text(
+                                                          'Link copied to clipboard!')),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     );
                                   },
                                 ),
