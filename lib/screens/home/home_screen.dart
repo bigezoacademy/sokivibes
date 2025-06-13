@@ -141,15 +141,25 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.music_off, color: Colors.grey, size: 48),
-                SizedBox(height: 16),
-                Text(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: SizedBox(
+                    width: 180,
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.music_off, color: Colors.grey, size: 48),
+                const SizedBox(height: 16),
+                const Text(
                   'No songs found.',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 8),
-                Text(
+                const SizedBox(height: 8),
+                const Text(
                   'Login or check your internet.',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                   textAlign: TextAlign.center,
