@@ -203,16 +203,12 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                     } else if (value == 'most_liked') {
                       _fetchSongsFuture =
                           songProvider.fetchSongs(sortBy: 'most_liked');
-                    } else if (value == 'top_voted') {
-                      _fetchSongsFuture =
-                          songProvider.fetchSongs(sortBy: 'top_voted');
                     }
                   });
                 },
                 itemBuilder: (context) => const [
                   PopupMenuItem(value: 'latest', child: Text('Latest')),
                   PopupMenuItem(value: 'most_liked', child: Text('Most Liked')),
-                  PopupMenuItem(value: 'top_voted', child: Text('Top Voted')),
                 ],
               ),
             ],
@@ -230,17 +226,6 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 16, top: 8),
-                              child: Text(
-                                'Original',
-                                style: TextStyle(
-                                  color: Colors.pink,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
                             SongCard(
                               title: song.title,
                               genres: song.genres,
@@ -257,29 +242,30 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                                 );
                               },
                               onDownload: () async {
-                                final hasPermission = await PermissionService()
-                                    .requestStoragePermission();
-                                if (hasPermission) {
-                                  try {
+                                try {
+                                  final hasPermission =
+                                      await PermissionService()
+                                          .requestStoragePermission();
+                                  if (hasPermission) {
                                     await StorageService().downloadSong(
                                         song.originalUrl, song.title);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                          content:
-                                              Text('Downloaded ${song.title}')),
-                                    );
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
                                           content: Text(
-                                              'Download failed: \\${e.toString()}')),
+                                              'Downloaded \\${song.title}')),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Storage permission denied.')),
                                     );
                                   }
-                                } else {
+                                } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Storage permission denied.')),
+                                    SnackBar(
+                                        content: Text(
+                                            'Download failed: \\${e.toString()}')),
                                   );
                                 }
                               },
@@ -296,99 +282,11 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                                   );
                                 }
                               },
-                              onVote: () async {
-                                // Share logic instead of vote
-                                final shareText =
-                                    'Check out this song on Soki-Vibes: ${song.title}';
-                                await showModalBottomSheet(
-                                  context: context,
-                                  builder: (context) => SizedBox(
-                                    height: 160,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Text('Share this song',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        const SizedBox(height: 12),
-                                        SelectableText(shareText),
-                                        const SizedBox(height: 12),
-                                        ElevatedButton.icon(
-                                          icon: const Icon(Icons.copy),
-                                          label: const Text('Copy Link'),
-                                          onPressed: () {
-                                            Clipboard.setData(
-                                                ClipboardData(text: shareText));
-                                            Navigator.pop(context);
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                  content: Text(
-                                                      'Link copied to clipboard!')),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
                               onComment: () {
                                 Navigator.pushNamed(context, '/song-detail',
                                     arguments: song);
                               },
-                              onCovers: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => SongCoversPage(song: song),
-                                  ),
-                                );
-                              },
                             ),
-                            if (song.versions.length > 1)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 24, top: 4),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.library_music,
-                                        color: Colors.pink.shade200, size: 18),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '(${song.versions.length - 1}) AI Covers ',
-                                      style: TextStyle(
-                                        color: Colors.pink.shade200,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                SongCoversPage(song: song),
-                                          ),
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.pink,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16, vertical: 8),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                      ),
-                                      child: const Text('View Covers'),
-                                    ),
-                                  ],
-                                ),
-                              ),
                           ],
                         ),
                       );

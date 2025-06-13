@@ -39,16 +39,14 @@ class SokiVibesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CommentProvider()),
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
       ],
-      child: Consumer<ThemeModeProvider>(
-        builder: (context, themeProvider, _) => MaterialApp(
-          title: 'Soki-Vibes',
-          theme: AppThemes.lightTheme,
-          darkTheme: AppThemes.darkTheme,
-          themeMode: themeProvider.themeMode,
-          initialRoute: AppRoutes.home,
-          routes: AppRoutes.routes,
-          debugShowCheckedModeBanner: false,
-        ),
+      child: MaterialApp(
+        title: 'Soki-Vibes',
+        theme: AppThemes.lightTheme,
+        darkTheme: AppThemes.darkTheme,
+        themeMode: ThemeMode.dark, // Force dark mode only
+        initialRoute: AppRoutes.home,
+        routes: AppRoutes.routes,
+        debugShowCheckedModeBanner: false,
       ),
     );
   }

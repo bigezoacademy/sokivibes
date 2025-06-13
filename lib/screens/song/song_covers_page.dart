@@ -22,9 +22,22 @@ class SongCoversPage extends StatelessWidget {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final songProvider = Provider.of<SongProvider>(context, listen: false);
     return Scaffold(
-      appBar: AppBar(title: Text('Covers for ${song.title}')),
+      appBar:
+          AppBar(title: const Text('Covers')), // Remove song title from AppBar
       body: ListView(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            child: Text(
+              song.title,
+              style: const TextStyle(
+                color: Color(0xFF001F54), // Navy blue
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ),
           // Original song card at the top
           Card(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -50,18 +63,27 @@ class SongCoversPage extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.download),
                     onPressed: () async {
-                      final hasPermission =
-                          await PermissionService().requestStoragePermission();
-                      if (hasPermission) {
-                        await StorageService()
-                            .downloadSong(song.originalUrl, song.title);
+                      try {
+                        final hasPermission = await PermissionService()
+                            .requestStoragePermission();
+                        if (hasPermission) {
+                          await StorageService()
+                              .downloadSong(song.originalUrl, song.title);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('Downloaded \\${song.title}')),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Storage permission denied.')),
+                          );
+                        }
+                      } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Downloaded ${song.title}')),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Storage permission denied.')),
+                          SnackBar(
+                              content:
+                                  Text('Download failed: \\${e.toString()}')),
                         );
                       }
                     },
@@ -155,20 +177,29 @@ class SongCoversPage extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.download),
                         onPressed: () async {
-                          final hasPermission = await PermissionService()
-                              .requestStoragePermission();
-                          if (hasPermission) {
-                            await StorageService().downloadSong(
-                                cover.fileUrl, song.title + '_' + cover.genre);
+                          try {
+                            final hasPermission = await PermissionService()
+                                .requestStoragePermission();
+                            if (hasPermission) {
+                              await StorageService().downloadSong(cover.fileUrl,
+                                  song.title + '_' + cover.genre);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Downloaded \\${song.title} (\\${cover.genre})')),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text('Storage permission denied.')),
+                              );
+                            }
+                          } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                   content: Text(
-                                      'Downloaded ${song.title} (${cover.genre})')),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Storage permission denied.')),
+                                      'Download failed: \\${e.toString()}')),
                             );
                           }
                         },
