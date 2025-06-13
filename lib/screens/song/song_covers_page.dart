@@ -31,9 +31,9 @@ class SongCoversPage extends StatelessWidget {
             child: Text(
               song.title,
               style: const TextStyle(
-                color: Color(0xFF001F54), // Navy blue
+                color: Colors.pink,
                 fontWeight: FontWeight.bold,
-                fontSize: 22,
+                fontSize: 18,
               ),
               textAlign: TextAlign.left,
             ),
@@ -41,89 +41,113 @@ class SongCoversPage extends StatelessWidget {
           // Original song card at the top
           Card(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            color: Colors.pink.shade50,
-            child: ListTile(
-              leading: const Icon(Icons.music_note, color: Colors.pink),
-              title: Text('${song.title} (Original)',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(song.genres.isNotEmpty ? song.genres.first : ''),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
+            color: const Color.fromARGB(255, 77, 56, 66),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.play_arrow),
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (_) => SongPlayerBottomSheet(
-                            url: song.originalUrl, title: song.title),
-                      );
-                    },
+                  // Music icon column
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0, top: 8),
+                    child: Icon(Icons.music_note, color: Colors.pink, size: 32),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.download),
-                    onPressed: () async {
-                      try {
-                        final hasPermission = await PermissionService()
-                            .requestStoragePermission();
-                        if (hasPermission) {
-                          await StorageService()
-                              .downloadSong(song.originalUrl, song.title);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('Downloaded \\${song.title}')),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Storage permission denied.')),
-                          );
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text('Download failed: \\${e.toString()}')),
-                        );
-                      }
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.favorite_border),
-                    onPressed: () async {
-                      if (!auth.isLoggedIn) {
-                        Navigator.pushNamed(context, '/login');
-                      } else {
-                        await songProvider.likeSong(song.id, auth.user!.uid);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Liked!')),
-                        );
-                      }
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_upward),
-                    onPressed: () async {
-                      if (!auth.isLoggedIn) {
-                        Navigator.pushNamed(context, '/login');
-                      } else {
-                        await songProvider.voteSong(song.id, auth.user!.uid);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Voted!')),
-                        );
-                      }
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.comment),
-                    onPressed: () {
-                      if (!auth.isLoggedIn) {
-                        Navigator.pushNamed(context, '/login');
-                      } else {
-                        Navigator.pushNamed(context, '/song-detail',
-                            arguments: song);
-                      }
-                    },
+                  // Details and actions column
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // "Original" label
+                        // Genre row
+                        // Genre row
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Text(
+                                'Original/ raw',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color.fromARGB(179, 255, 255, 255),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Actions row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.play_arrow),
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (_) => SongPlayerBottomSheet(
+                                      url: song.originalUrl, title: song.title),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.download),
+                              onPressed: () async {
+                                try {
+                                  final hasPermission =
+                                      await PermissionService()
+                                          .requestStoragePermission();
+                                  if (hasPermission) {
+                                    await StorageService().downloadSong(
+                                        song.originalUrl, song.title);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content:
+                                              Text('Downloaded ${song.title}')),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Storage permission denied.')),
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Download failed: ${e.toString()}')),
+                                  );
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.favorite_border),
+                              onPressed: () async {
+                                if (!auth.isLoggedIn) {
+                                  Navigator.pushNamed(context, '/login');
+                                } else {
+                                  await songProvider.likeSong(
+                                      song.id, auth.user!.uid);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Liked!')),
+                                  );
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.comment),
+                              onPressed: () {
+                                if (!auth.isLoggedIn) {
+                                  Navigator.pushNamed(context, '/login');
+                                } else {
+                                  Navigator.pushNamed(context, '/song-detail',
+                                      arguments: song);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -139,109 +163,133 @@ class SongCoversPage extends StatelessWidget {
           ...covers.map((cover) => Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 color: Colors.white.withOpacity(0.1),
-                child: ListTile(
-                  leading: const Icon(Icons.music_note, color: Colors.pink),
-                  title: Column(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        song.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      // Music icon column
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12.0, top: 8),
+                        child: Icon(Icons.music_note,
+                            color: Colors.pink, size: 32),
                       ),
-                      const Text('AI Cover',
-                          style: TextStyle(fontSize: 12, color: Colors.pink)),
-                    ],
-                  ),
-                  subtitle: Row(
-                    children: [
-                      Text('Votes: \\${cover.votes}'),
-                      const SizedBox(width: 16),
-                      Text('Likes: \\${cover.likes}'),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.play_arrow),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (_) => SongPlayerBottomSheet(
-                              url: cover.fileUrl,
-                              title: song.title + ' (AI Cover)',
+                      // Details and actions column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // "Cover" label row
+                            Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Text(
+                                    'Cover',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color.fromARGB(
+                                          255, 255, 255, 255), // white
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.download),
-                        onPressed: () async {
-                          try {
-                            final hasPermission = await PermissionService()
-                                .requestStoragePermission();
-                            if (hasPermission) {
-                              await StorageService().downloadSong(cover.fileUrl,
-                                  song.title + '_' + cover.genre);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        'Downloaded \\${song.title} (\\${cover.genre})')),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Storage permission denied.')),
-                              );
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(
-                                      'Download failed: \\${e.toString()}')),
-                            );
-                          }
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.favorite_border),
-                        onPressed: () async {
-                          if (!auth.isLoggedIn) {
-                            Navigator.pushNamed(context, '/login');
-                          } else {
-                            await songProvider.likeSong(
-                                song.id, auth.user!.uid);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Liked!')),
-                            );
-                          }
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.arrow_upward),
-                        onPressed: () async {
-                          if (!auth.isLoggedIn) {
-                            Navigator.pushNamed(context, '/login');
-                          } else {
-                            await songProvider.voteSong(
-                                song.id, auth.user!.uid);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Voted!')),
-                            );
-                          }
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.comment),
-                        onPressed: () {
-                          if (!auth.isLoggedIn) {
-                            Navigator.pushNamed(context, '/login');
-                          } else {
-                            Navigator.pushNamed(context, '/song-detail',
-                                arguments: song);
-                          }
-                        },
+                            // Votes and Likes row
+                            Row(
+                              children: [
+                                Text('Votes: ${cover.votes}',
+                                    style:
+                                        const TextStyle(color: Colors.white70)),
+                                const SizedBox(width: 16),
+                                Text('Likes: ${cover.likes}',
+                                    style:
+                                        const TextStyle(color: Colors.white70)),
+                              ],
+                            ),
+                            // Actions row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.play_arrow),
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (_) => SongPlayerBottomSheet(
+                                        url: cover.fileUrl,
+                                        title: song.title + ' (AI Cover)',
+                                      ),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.download),
+                                  onPressed: () async {
+                                    try {
+                                      final hasPermission =
+                                          await PermissionService()
+                                              .requestStoragePermission();
+                                      if (hasPermission) {
+                                        await StorageService().downloadSong(
+                                            cover.fileUrl,
+                                            song.title + '_' + cover.genre);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  'Downloaded ${song.title} (${cover.genre})')),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Storage permission denied.')),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(
+                                                'Download failed: ${e.toString()}')),
+                                      );
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.favorite_border),
+                                  onPressed: () async {
+                                    if (!auth.isLoggedIn) {
+                                      Navigator.pushNamed(context, '/login');
+                                    } else {
+                                      await songProvider.likeSong(
+                                          song.id, auth.user!.uid);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(content: Text('Liked!')),
+                                      );
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.comment),
+                                  onPressed: () {
+                                    if (!auth.isLoggedIn) {
+                                      Navigator.pushNamed(context, '/login');
+                                    } else {
+                                      Navigator.pushNamed(
+                                          context, '/song-detail',
+                                          arguments: song);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
