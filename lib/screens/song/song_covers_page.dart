@@ -115,14 +115,17 @@ class SongCoversPage extends StatelessWidget {
             )),
           ...covers.map((cover) => Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                color: Colors.white
+                    .withOpacity(0.1), // Transparent white background
                 child: ListTile(
-                  leading: const Icon(Icons.music_note),
-                  title: Text(cover.genre),
+                  leading: const Icon(Icons.music_note, color: Colors.pink),
+                  title: Text('${song.title} (AI Cover)',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Row(
                     children: [
-                      Text('Votes: ${cover.votes}'),
+                      Text('Votes: \\${cover.votes}'),
                       const SizedBox(width: 16),
-                      Text('Likes: ${cover.likes}'),
+                      Text('Likes: \\${cover.likes}'),
                     ],
                   ),
                   trailing: Row(
@@ -135,7 +138,7 @@ class SongCoversPage extends StatelessWidget {
                             context: context,
                             builder: (_) => SongPlayerBottomSheet(
                               url: cover.fileUrl,
-                              title: song.title + ' (' + cover.genre + ')',
+                              title: song.title + ' (AI Cover)',
                             ),
                           );
                         },
