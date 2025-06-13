@@ -12,10 +12,14 @@ class SongProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final cacheKey = 'songs_cache';
     try {
+      print('[SongProvider] Fetching songs from Firestore...');
       final query = FirebaseFirestore.instance.collection('songs');
       QuerySnapshot snapshot = await query.get();
+      print('[SongProvider] Firestore returned \\${snapshot.docs.length} docs');
       _songs = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
+        print(
+            '[SongProvider] Song doc: id=\\${doc.id}, data=\\${data.toString()}');
         return Song(
           id: doc.id,
           title: data['title'] ?? '',
@@ -23,6 +27,7 @@ class SongProvider extends ChangeNotifier {
           genres: List<String>.from(data['genres'] ?? []),
           originalUrl: data['originalUrl'] ?? '',
           versions: (data['versions'] as List<dynamic>? ?? [])
+              .where((v) => v != null)
               .map((v) => SongVersion(
                     genre: v['genre'] ?? '',
                     fileUrl: v['fileUrl'] ?? '',
@@ -34,6 +39,7 @@ class SongProvider extends ChangeNotifier {
               (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
         );
       }).toList();
+      print('[SongProvider] Parsed \\${_songs.length} songs');
       // Robust JSON cache
       final jsonList = _songs
           .map((s) => jsonEncode({
@@ -54,10 +60,13 @@ class SongProvider extends ChangeNotifier {
               }))
           .toList();
       prefs.setStringList(cacheKey, jsonList);
-    } catch (e) {
+    } catch (e, stack) {
+      print('[SongProvider] Error fetching songs: \\${e.toString()}');
+      print('[SongProvider] Stack trace: \\${stack.toString()}');
       // On error (e.g. offline), try to load from cache
       final cached = prefs.getStringList(cacheKey);
       if (cached != null) {
+        print('[SongProvider] Loading songs from cache');
         _songs = cached.map((s) {
           final data = jsonDecode(s);
           return Song(
@@ -77,6 +86,9 @@ class SongProvider extends ChangeNotifier {
             timestamp: DateTime.parse(data['timestamp']),
           );
         }).toList();
+        print('[SongProvider] Loaded \\${_songs.length} songs from cache');
+      } else {
+        print('[SongProvider] No cached songs available');
       }
     }
     notifyListeners();

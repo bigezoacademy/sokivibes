@@ -9,6 +9,7 @@ import '../../services/permission_service.dart';
 import '../../providers/theme_mode_provider.dart';
 import '../downloads/download_screen.dart';
 import '../admin/admin_dashboard.dart';
+import '../admin/analytics_screen.dart';
 import '../../models/song_model.dart';
 import '../user_dashboard.dart';
 import '../song/song_covers_page.dart';
@@ -41,12 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     List<Widget> _pages;
     if (isAdmin) {
-      // Admin: Home, Library, Upload, Admin
+      // Admin: Home, Library, Upload, Analytics
       _pages = [
         HomeTabWidget(),
         UserDashboard(),
-        AdminDashboard(),
-        AdminDashboard(),
+        AdminDashboard(), // Upload form
+        AnalyticsScreen(), // New analytics page
       ];
     } else if (isLoggedIn) {
       // Logged-in user: Home, Library, Downloads, Profile
@@ -103,6 +104,57 @@ class HomeTabWidget extends StatelessWidget {
     return FutureBuilder(
       future: songProvider.fetchSongs(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'Failed to load songs.',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  snapshot.error?.toString() ?? 'An unknown error occurred.',
+                  style: const TextStyle(fontSize: 14, color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                  onPressed: () {
+                    songProvider.fetchSongs();
+                  },
+                ),
+              ],
+            ),
+          );
+        } else if (songs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.music_off, color: Colors.grey, size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'No songs found.',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Try uploading a song or check your connection.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
         return Scaffold(
           appBar: AppBar(
             title: const Text('Soki-Vibes'),

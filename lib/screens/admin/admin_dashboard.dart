@@ -11,61 +11,26 @@ import 'package:provider/provider.dart';
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
+  Future<int> _getSongCount() async {
+    final snapshot = await FirebaseFirestore.instance.collection('songs').get();
+    return snapshot.size;
+  }
+
+  Future<int> _getUserCount() async {
+    final snapshot = await FirebaseFirestore.instance.collection('users').get();
+    return snapshot.size;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
-    // TODO: Only show for admin users, upload new songs, manage comments, view analytics
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(user?.displayName ?? 'Admin',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: Colors.white)),
-            Text(user?.email ?? '',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.white70)),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () async {
-              await authProvider.signOut();
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _UploadSongForm(),
-                const SizedBox(height: 32),
-                // ...existing analytics and comment management...
-                SizedBox(
-                  height: 200,
-                  child: Center(
-                      child: Text('Analytics and comment management here.')),
-                ),
-              ],
-            ),
-          ),
+    // Only show the upload form, not analytics
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: _UploadSongForm(),
         ),
       ),
-      floatingActionButton: null, // Remove FAB, handled in form
     );
   }
 }
@@ -156,7 +121,7 @@ class _UploadSongFormState extends State<_UploadSongForm> {
         setState(() {
           _uploadedUrls[i] = url;
         });
-        print('Upload successful: ${file.name}');
+        print('Upload successful: \\${file.name}');
       } catch (e) {
         print('Upload failed: $e');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -182,6 +147,8 @@ class _UploadSongFormState extends State<_UploadSongForm> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('All files uploaded!')),
     );
+    // Automatically submit after upload
+    await _submit();
   }
 
   Future<void> _submit() async {
@@ -417,29 +384,31 @@ class _UploadSongFormState extends State<_UploadSongForm> {
               if (_isUploading)
                 Padding(
                   padding: const EdgeInsets.only(top: 12.0),
-                  child: LinearProgressIndicator(
-                    value: _uploadProgress > 0 ? _uploadProgress : null,
-                    minHeight: 4,
-                    color: Colors.pink,
-                    backgroundColor: Colors.pink.shade100,
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: _uploadProgress > 0 ? _uploadProgress : null,
+                        minHeight: 4,
+                        color: Colors.pink,
+                        backgroundColor: Colors.pink.shade100,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _uploadProgress > 0
+                            ? 'Uploading: ${(100 * _uploadProgress).toStringAsFixed(0)}%'
+                            : 'Uploading...',
+                        style: const TextStyle(
+                            color: Colors.pink, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
               if (_fileSize != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                      'File size: ${(_fileSize! / (1024 * 1024)).toStringAsFixed(2)} MB'),
+                      'File size: \\${(_fileSize! / (1024 * 1024)).toStringAsFixed(2)} MB'),
                 ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed:
-                    _isUploading || _uploadedUrls[0] == null ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  textStyle: const TextStyle(fontSize: 18),
-                ),
-                child: const Text('Add Song'),
-              ),
             ],
           ),
         ),
