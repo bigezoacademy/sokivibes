@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/song_provider.dart';
 import '../../services/permission_service.dart';
 import '../../services/storage_service.dart';
+import '../../widgets/bottom_nav_bar.dart';
 
 class SongCoversPage extends StatelessWidget {
   final Song song;
@@ -115,12 +116,20 @@ class SongCoversPage extends StatelessWidget {
             )),
           ...covers.map((cover) => Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                color: Colors.white
-                    .withOpacity(0.1), // Transparent white background
+                color: Colors.white.withOpacity(0.1),
                 child: ListTile(
                   leading: const Icon(Icons.music_note, color: Colors.pink),
-                  title: Text('${song.title} (AI Cover)',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        song.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const Text('AI Cover',
+                          style: TextStyle(fontSize: 12, color: Colors.pink)),
+                    ],
+                  ),
                   subtitle: Row(
                     children: [
                       Text('Votes: \\${cover.votes}'),
@@ -208,6 +217,14 @@ class SongCoversPage extends StatelessWidget {
                 ),
               )),
         ],
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 0, // or set to the appropriate index for navigation
+        onTap: (index) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+          // Optionally, implement navigation logic here if needed
+        },
+        isAdmin: Provider.of<AuthProvider>(context, listen: false).isAdmin,
       ),
     );
   }
