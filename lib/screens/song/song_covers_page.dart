@@ -196,13 +196,9 @@ class SongCoversPage extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            // Votes and Likes row
+                            // Likes row (votes removed)
                             Row(
                               children: [
-                                Text('Votes: ${cover.votes}',
-                                    style:
-                                        const TextStyle(color: Colors.white70)),
-                                const SizedBox(width: 16),
                                 Text('Likes: ${cover.likes}',
                                     style:
                                         const TextStyle(color: Colors.white70)),
