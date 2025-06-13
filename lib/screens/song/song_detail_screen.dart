@@ -1,30 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/song_model.dart';
-import '../../widgets/song_version_tile.dart';
-import '../../widgets/audio_player_widget.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/storage_service.dart';
-import '../../services/permission_service.dart';
 import '../../providers/comment_provider.dart';
 import '../../widgets/comment_box.dart';
 import 'package:flutter/services.dart';
 
-class SongDetailScreen extends StatelessWidget {
+class SongDetailScreen extends StatefulWidget {
   final Song? song;
   const SongDetailScreen({super.key, this.song});
 
   @override
+  State<SongDetailScreen> createState() => _SongDetailScreenState();
+}
+
+class _SongDetailScreenState extends State<SongDetailScreen> {
+  late Song effectiveSong;
+  late TextEditingController _controller;
+  bool _isLoading = false;
+  double _commentProgress = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final song =
+          widget.song ?? ModalRoute.of(context)?.settings.arguments as Song?;
+      if (song != null) {
+        setState(() => effectiveSong = song);
+        Provider.of<CommentProvider>(context, listen: false)
+            .fetchComments(song.id);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addComment(
+      CommentProvider commentProvider, String userId, String text) async {
+    setState(() {
+      _isLoading = true;
+      _commentProgress = 0.05;
+    });
+    // Simulate progress for UX (Firestore is fast, so we animate for effect)
+    for (int i = 1; i <= 10; i++) {
+      await Future.delayed(const Duration(milliseconds: 30));
+      setState(() {
+        _commentProgress = i / 10;
+      });
+    }
+    await commentProvider.addComment(effectiveSong.id, userId, text);
+    setState(() {
+      _isLoading = false;
+      _commentProgress = 0.0;
+    });
+    _controller.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Comment added!')),
+    );
+    await commentProvider.fetchComments(effectiveSong.id);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Fix: Try to get the song from ModalRoute if not passed directly
-    final Song? effectiveSong =
-        song ?? ModalRoute.of(context)?.settings.arguments as Song?;
-    if (effectiveSong == null) {
+    // If effectiveSong is not set yet, show loading
+    if (widget.song == null &&
+        ModalRoute.of(context)?.settings.arguments == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Song Details')),
         body: const Center(child: Text('No song selected.')),
       );
     }
+
     return Scaffold(
       appBar: AppBar(title: Text(effectiveSong.title)),
       body: ListView(
@@ -34,101 +86,77 @@ class SongDetailScreen extends StatelessWidget {
             Text(effectiveSong.description,
                 style: Theme.of(context).textTheme.bodyLarge),
           if (effectiveSong.description.isNotEmpty) const SizedBox(height: 16),
-          Text('Original Version',
-              style: Theme.of(context).textTheme.titleMedium),
-          AudioPlayerWidget(url: effectiveSong.originalUrl),
-          const SizedBox(height: 16),
-          Text('AI Versions', style: Theme.of(context).textTheme.titleMedium),
-          ...effectiveSong.versions
-              .where((v) =>
-                  v.fileUrl != effectiveSong.originalUrl &&
-                  v.fileUrl.isNotEmpty)
-              .map((v) => SongVersionTile(
-                    genre: v.genre,
-                    fileUrl: v.fileUrl,
-                    votes: v.votes,
-                    likes: v.likes,
-                    onPlay: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (_) => SizedBox(
-                          height: 120,
-                          child: AudioPlayerWidget(url: v.fileUrl),
-                        ),
-                      );
-                    },
-                    onDownload: () async {
-                      final hasPermission =
-                          await PermissionService().requestStoragePermission();
-                      if (hasPermission) {
-                        await StorageService().downloadSong(
-                            v.fileUrl, effectiveSong.title + '_' + v.genre);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  'Downloaded ${effectiveSong.title} (${v.genre})')),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Storage permission denied.')),
-                        );
-                      }
-                    },
-                    onLike: () {
-                      final auth =
-                          Provider.of<AuthProvider>(context, listen: false);
-                      if (!auth.isLoggedIn) {
-                        Navigator.pushNamed(context, '/login');
-                      } else {
-                        // Like logic for version
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Liked (implement logic)')),
-                        );
-                      }
-                    },
-                    onShare: () {
-                      final shareText =
-                          'Check out this song on Soki-Vibes: ${effectiveSong.title}';
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) => SizedBox(
-                          height: 160,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('Share this song',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 12),
-                              SelectableText(shareText),
-                              const SizedBox(height: 12),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.copy),
-                                label: const Text('Copy Link'),
-                                onPressed: () {
-                                  Clipboard.setData(
-                                      ClipboardData(text: shareText));
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Link copied to clipboard!')),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  )),
-          const SizedBox(height: 24),
+          // Metadata section
+          Text('Song Metadata', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Table(
+            columnWidths: const {0: IntrinsicColumnWidth()},
+            border: const TableBorder(
+              horizontalInside: BorderSide(
+                color: Color.fromARGB(255, 96, 96, 96), // dark-grey
+                width: 1,
+              ),
+            ),
+            children: [
+              TableRow(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Color.fromARGB(255, 96, 96, 96), // dark-grey
+                      width: 1,
+                    ),
+                  ),
+                ),
+                children: [
+                  const Text(
+                    'Title:',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  Text(effectiveSong.title),
+                ],
+              ),
+              TableRow(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Color.fromARGB(255, 96, 96, 96), // dark-grey
+                      width: 1,
+                    ),
+                  ),
+                ),
+                children: [
+                  const Text(
+                    'Genres:',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  Text(effectiveSong.genres.isNotEmpty
+                      ? effectiveSong.genres.join(', ')
+                      : '-'),
+                ],
+              ),
+              TableRow(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Color.fromARGB(255, 96, 96, 96), // dark-grey
+                      width: 1,
+                    ),
+                  ),
+                ),
+                children: [
+                  const Text(
+                    'Uploaded:',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  Text(effectiveSong.timestamp.toString()),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
           Text('Comments', style: Theme.of(context).textTheme.titleMedium),
           Consumer<CommentProvider>(
             builder: (context, commentProvider, _) {
-              commentProvider.fetchComments(effectiveSong.id);
               final comments = commentProvider.comments;
               return Column(
                 children: [
@@ -150,6 +178,10 @@ class SongDetailScreen extends StatelessWidget {
                                 ? () async {
                                     await commentProvider.deleteComment(
                                         c.id, effectiveSong.id);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Comment deleted.')),
+                                    );
                                   }
                                 : null,
                       )),
@@ -163,28 +195,59 @@ class SongDetailScreen extends StatelessWidget {
                           child: const Text('Log in to comment'),
                         );
                       }
-                      final controller = TextEditingController();
                       return Row(
                         children: [
                           Expanded(
                             child: TextField(
-                              controller: controller,
+                              controller: _controller,
                               decoration: const InputDecoration(
                                   hintText: 'Add a comment...'),
+                              enabled: !_isLoading,
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.send),
-                            onPressed: () async {
-                              if (controller.text.trim().isNotEmpty) {
-                                await commentProvider.addComment(
-                                    effectiveSong.id,
-                                    auth.user!.uid,
-                                    controller.text.trim());
-                                controller.clear();
-                              }
-                            },
-                          ),
+                          _isLoading
+                              ? Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      LinearProgressIndicator(
+                                        value: _commentProgress > 0
+                                            ? _commentProgress
+                                            : null,
+                                        minHeight: 3,
+                                        color: Colors.pink,
+                                        backgroundColor: Colors.pink.shade100,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _commentProgress > 0
+                                            ? 'Uploading: ${(100 * _commentProgress).toStringAsFixed(0)}%'
+                                            : 'Uploading...',
+                                        style: const TextStyle(
+                                            color: Colors.pink,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.send),
+                                  onPressed: () async {
+                                    if (_controller.text.trim().isNotEmpty) {
+                                      final commentProvider =
+                                          Provider.of<CommentProvider>(context,
+                                              listen: false);
+                                      final auth = Provider.of<AuthProvider>(
+                                          context,
+                                          listen: false);
+                                      await _addComment(
+                                          commentProvider,
+                                          auth.user!.uid,
+                                          _controller.text.trim());
+                                    }
+                                  },
+                                ),
                         ],
                       );
                     },

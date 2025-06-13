@@ -150,7 +150,7 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Try uploading a song or check your connection.',
+                  'Login or check your internet.',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),

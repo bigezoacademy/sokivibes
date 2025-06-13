@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:flutter/services.dart'; // Import for Clipboard
 import '../../models/song_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/song_provider.dart';
@@ -280,6 +281,19 @@ class SongCoversPage extends StatelessWidget {
                                           context, '/song-detail',
                                           arguments: song);
                                     }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.copy),
+                                  tooltip: 'Copy song link',
+                                  onPressed: () async {
+                                    final url = cover.fileUrl;
+                                    await Clipboard.setData(
+                                        ClipboardData(text: url));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Song link copied!')),
+                                    );
                                   },
                                 ),
                               ],
