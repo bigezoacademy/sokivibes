@@ -231,7 +231,7 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(
-                          top: 8, left: 16, right: 16, bottom: 8),
+                          top: 24, left: 16, right: 16, bottom: 8),
                       child: Text(
                         'Listen or Download AI-generated covers of your favorite original songs. Enjoy both the raw tracks and creative AI versions, all in one place!',
                         style: TextStyle(color: Colors.white70, fontSize: 12),
