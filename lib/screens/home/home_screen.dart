@@ -12,7 +12,7 @@ import '../admin/admin_dashboard.dart';
 import '../admin/analytics_screen.dart';
 import '../../models/song_model.dart';
 import '../user_dashboard.dart';
-import '../song/song_covers_page.dart';
+import '../song/song_covers_page.dart'; // SongPlayerBottomSheet is defined here
 import '../auth/login_screen.dart';
 import '../profile/profile_screen.dart';
 
@@ -232,12 +232,9 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                           onPlay: () {
                             showModalBottomSheet(
                               context: context,
-                              builder: (_) => const SizedBox(
-                                height: 120,
-                                child: Center(
-                                  child: Text(
-                                      'Audio player UI here (see SongDetailScreen for full version playback)'),
-                                ),
+                              builder: (_) => SongPlayerBottomSheet(
+                                url: song.originalUrl,
+                                title: song.title,
                               ),
                             );
                           },
@@ -299,6 +296,7 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                             );
                           },
                         ),
+                        // Remove the 'Covers' button, keep only 'View Covers' with new style
                         if (song.versions.length > 1)
                           Padding(
                             padding: const EdgeInsets.only(left: 24, top: 4),
@@ -308,14 +306,14 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                                     color: Colors.pink.shade200, size: 18),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '\\${song.versions.length - 1} cover(s) available',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(color: Colors.pink.shade200),
+                                  '(${song.versions.length - 1}) AI Covers ',
+                                  style: TextStyle(
+                                    color: Colors.pink.shade200,
+                                    fontSize: 14,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
-                                TextButton(
+                                ElevatedButton(
                                   onPressed: () {
                                     Navigator.push(
                                       context,
@@ -325,9 +323,16 @@ class _HomeTabWidgetState extends State<HomeTabWidget> {
                                       ),
                                     );
                                   },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.pink,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
                                   child: const Text('View Covers'),
-                                  style: TextButton.styleFrom(
-                                      foregroundColor: Colors.pink),
                                 ),
                               ],
                             ),
